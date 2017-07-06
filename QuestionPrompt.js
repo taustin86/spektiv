@@ -4,6 +4,7 @@ import React, { Component } from 'react'
 import {
   StyleSheet,
   View,
+  ScrollView,
   Text,
   TextInput,
   TouchableHighlight
@@ -17,8 +18,7 @@ var styles = StyleSheet.create({
   },
   conversationContainer: {
     flex: 1,
-    flexDirection: 'column',
-    height: '100%'
+    flexDirection: 'column'
   },
   respondContainer: {
     flexDirection: 'row',
@@ -29,7 +29,7 @@ var styles = StyleSheet.create({
   messagesContainer: {
     flex: 5,
     padding: 30,
-    marginTop: 65
+    marginTop: 45
   },
   promptQuestion: {
     marginBottom: 20,
@@ -148,7 +148,17 @@ class QuestionPrompt extends Component {
   }
 
   onInitialResponseSubmitted() {
-    this.setState({conversation: [{id: 1, type: 'bot', text: this.state.suggestedPrompt}, {id: 2, type: 'user', text: this.state.initialResponse}]});
+    this.setState({conversation: [{type: 'bot', text: this.state.suggestedPrompt}, {type: 'user', text: this.state.initialResponse}]});
+  }
+
+  onConversationResponseChanged(event) {
+    this.setState({ conversationResponse: event.nativeEvent.text });
+  }
+
+  onSubmitResponse() {
+    var conversation = this.state.conversation.slice();
+    conversation.push({type: 'user', text: this.state.conversationResponse});
+    this.setState({conversation: conversation, conversationResponse: ''});
   }
 
   render() {
@@ -168,18 +178,19 @@ class QuestionPrompt extends Component {
       );
     } else {
       var messages = [];
-      this.state.conversation.forEach(function(message){
-        messages.push(<Message key={message.id} text={message.text} type={message.type}/>);
+      this.state.conversation.forEach(function(message, index){
+        messages.push(<Message key={index} text={message.text} type={message.type}/>);
       });
       return (
         <View style={styles.conversationContainer}>
-          <View style={styles.messagesContainer}>
+          <ScrollView ref="conversation" style={styles.messagesContainer}>
             {messages}
-          </View>
+          </ScrollView>
           <View style={styles.respondContainer}>
-            <TextInput style={styles.smallAnswerInput} multiline={true} />
+            <TextInput style={styles.smallAnswerInput} multiline={true} value={this.state.conversationResponse}
+              onChange={this.onConversationResponseChanged.bind(this)} />
             <TouchableHighlight style={styles.smallAnswerButton} underlayColor='#99d9f4'>
-              <Text style={styles.buttonText}>Send</Text>
+              <Text style={styles.buttonText} onPress={this.onSubmitResponse.bind(this)}>Send</Text>
             </TouchableHighlight>
           </View>
         </View>
