@@ -4,7 +4,7 @@ import React, { Component } from 'react'
 import {
   StyleSheet,
   View,
-  ScrollView,
+  FlatList,
   Text,
   TextInput,
   TouchableHighlight
@@ -27,9 +27,10 @@ var styles = StyleSheet.create({
     padding: 30
   },
   messagesContainer: {
-    flex: 5,
-    padding: 30,
-    marginTop: 45
+    paddingLeft: 30,
+    paddingRight: 30,
+    marginTop: 45,
+    marginBottom: 25
   },
   promptQuestion: {
     marginBottom: 20,
@@ -148,7 +149,7 @@ class QuestionPrompt extends Component {
   }
 
   onInitialResponseSubmitted() {
-    this.setState({conversation: [{type: 'bot', text: this.state.suggestedPrompt}, {type: 'user', text: this.state.initialResponse}]});
+    this.setState({conversation: [{id: 1, type: 'bot', text: this.state.suggestedPrompt}, {id: 2, type: 'user', text: this.state.initialResponse}]}, this._scrollConversation);
   }
 
   onConversationResponseChanged(event) {
@@ -157,8 +158,22 @@ class QuestionPrompt extends Component {
 
   onSubmitResponse() {
     var conversation = this.state.conversation.slice();
-    conversation.push({type: 'user', text: this.state.conversationResponse});
-    this.setState({conversation: conversation, conversationResponse: ''});
+    conversation.push({id: (conversation.length + 1), type: 'user', text: this.state.conversationResponse});
+    this.setState({conversation: conversation, conversationResponse: ''}, this._scrollConversation);
+  }
+
+  _renderMessage(message) {
+    return (
+      <Message text={message.item.text} type={message.item.type} />
+    );
+  }
+
+  _keyExtractor(item) {
+    return (item.id);
+  }
+
+  _scrollConversation() {
+    this.refs.conversation.scrollToEnd();
   }
 
   render() {
@@ -177,15 +192,13 @@ class QuestionPrompt extends Component {
         </View>
       );
     } else {
-      var messages = [];
-      this.state.conversation.forEach(function(message, index){
-        messages.push(<Message key={index} text={message.text} type={message.type}/>);
-      });
       return (
         <View style={styles.conversationContainer}>
-          <ScrollView ref="conversation" style={styles.messagesContainer}>
-            {messages}
-          </ScrollView>
+          <FlatList ref="conversation" data={this.state.conversation}
+            style={styles.messagesContainer}
+            renderItem={this._renderMessage}
+            keyExtractor={this._keyExtractor}
+          />
           <View style={styles.respondContainer}>
             <TextInput style={styles.smallAnswerInput} multiline={true} value={this.state.conversationResponse}
               onChange={this.onConversationResponseChanged.bind(this)} />
